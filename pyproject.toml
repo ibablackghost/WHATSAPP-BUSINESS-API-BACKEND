@@ -1,0 +1,26 @@
+[project]
+name = "whatbot-pro"
+version = "1.0.0"
+description = "WhatBot Pro - SaaS WhatsApp Business automation platform"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "whatbot_pro.settings.test"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --cov=apps --cov-report=term-missing --cov-fail-under=85"
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "whatbot_pro.settings.dev"

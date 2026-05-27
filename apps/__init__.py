@@ -1,0 +1,1 @@
+"""WhatBot Pro applications package."""
