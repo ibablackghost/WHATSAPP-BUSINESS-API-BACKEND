@@ -7,6 +7,21 @@ from rest_framework.views import APIView
 from whatbot_pro.settings.database import database_host_hint
 
 
+class LiveHealthView(APIView):
+    """Réponse immédiate pour sonde Railway (sans accès DB)."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        return Response(
+            {
+                "status": "ok",
+                "settings_module": settings.SETTINGS_MODULE,
+            }
+        )
+
+
 class HealthCheckView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []

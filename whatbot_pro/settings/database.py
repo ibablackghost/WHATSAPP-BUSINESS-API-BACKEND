@@ -23,10 +23,12 @@ def _pg_from_url(database_url: str) -> dict:
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     parsed = urlparse(database_url)
     query = parse_qs(parsed.query)
-    options = {}
+    options: dict[str, str] = {"connect_timeout": "10"}
     sslmode = query.get("sslmode", [None])[0]
     if sslmode:
         options["sslmode"] = sslmode
+    elif os.environ.get("RAILWAY_ENVIRONMENT"):
+        options["sslmode"] = "require"
     return {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": unquote(parsed.path.lstrip("/") or ""),
@@ -43,14 +45,26 @@ def build_databases() -> dict:
     if database_url:
         return {"default": _pg_from_url(database_url)}
 
+    host = _env_first("POSTGRES_HOST", "PGHOST", default="localhost")
+    if os.environ.get("RAILWAY_ENVIRONMENT") and host in ("localhost", "127.0.0.1"):
+        host = _env_first("PGHOST", default=host)
+
     return {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": _env_first("POSTGRES_DB", "PGDATABASE", default="whatbot_pro"),
             "USER": _env_first("POSTGRES_USER", "PGUSER", default="whatbot"),
             "PASSWORD": _env_first("POSTGRES_PASSWORD", "PGPASSWORD", default="whatbot"),
-            "HOST": _env_first("POSTGRES_HOST", "PGHOST", default="localhost"),
+            "HOST": host,
             "PORT": _env_first("POSTGRES_PORT", "PGPORT", default="5432"),
+            "OPTIONS": {
+                "connect_timeout": 10,
+                **(
+                    {"sslmode": "require"}
+                    if os.environ.get("RAILWAY_ENVIRONMENT")
+                    else {}
+                ),
+            },
         }
     }
 

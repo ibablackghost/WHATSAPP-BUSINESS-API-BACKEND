@@ -9,4 +9,8 @@ def default_settings_module() -> str:
 
 
 def apply_default_settings() -> None:
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", default_settings_module())
+    # Sur Railway, toujours la prod (évite DJANGO_SETTINGS_MODULE=postgres_local par erreur).
+    if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PUBLIC_DOMAIN"):
+        os.environ["DJANGO_SETTINGS_MODULE"] = "whatbot_pro.settings.prod"
+    else:
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", default_settings_module())

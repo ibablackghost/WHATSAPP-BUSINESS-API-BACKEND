@@ -16,9 +16,17 @@ if _railway_public:
 if os.environ.get("RAILWAY_ENVIRONMENT"):
     _extra_hosts.extend([".railway.app", ".up.railway.app"])
 
+def _normalize_host(host: str) -> str:
+    h = host.strip()
+    for prefix in ("https://", "http://"):
+        if h.startswith(prefix):
+            h = h[len(prefix) :]
+    return h.split("/")[0].strip()
+
+
 ALLOWED_HOSTS = list(
     dict.fromkeys(
-        h.strip()
+        _normalize_host(h)
         for h in (*ALLOWED_HOSTS, *_extra_hosts)
         if h and str(h).strip()
     )
@@ -32,7 +40,9 @@ if _csrf_env:
     _csrf_origins.extend(origin.strip() for origin in _csrf_env.split(",") if origin.strip())
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(_csrf_origins))
-SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)  # noqa: F405
+# Railway termine TLS en amont : redirect SSL côté Django provoque souvent 502/timeout.
+_ssl_default = not bool(os.environ.get("RAILWAY_ENVIRONMENT"))
+SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=_ssl_default, cast=bool)  # noqa: F405
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True

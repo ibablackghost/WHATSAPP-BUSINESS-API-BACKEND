@@ -25,8 +25,9 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 FROM base AS production
 ENV DJANGO_SETTINGS_MODULE=whatbot_pro.settings.prod \
     WEB_CONCURRENCY=2
-# Railway injecte PORT (souvent != 8000) — ne pas binder en dur sur 8000
-EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD sh -c 'curl -f "http://127.0.0.1:${PORT:-8000}/health/" || exit 1'
-CMD ["sh", "-c", "exec gunicorn whatbot_pro.asgi:application -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8000} -w ${WEB_CONCURRENCY}"]
+RUN chmod +x /app/docker/entrypoint.sh
+# Railway injecte PORT (souvent 8080) — Daphne lit $PORT dans entrypoint.sh
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD sh -c 'curl -f "http://127.0.0.1:${PORT:-8080}/health/live/" || exit 1'
+ENTRYPOINT ["/app/docker/entrypoint.sh"]
