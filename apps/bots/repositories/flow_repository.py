@@ -5,9 +5,15 @@ from apps.bots.models import BotFlow, BotStep
 
 class FlowRepository:
     def get_default_flow(self, organization_id: UUID) -> BotFlow | None:
+        base = BotFlow.all_objects.filter(organization_id=organization_id, is_active=True)
+        preferred = base.filter(is_default=True, steps__isnull=False).distinct()
+        flow = preferred.order_by("-created_at").first()
+        if flow:
+            return flow
         return (
-            BotFlow.all_objects.filter(organization_id=organization_id, is_active=True)
-            .order_by("-is_default", "-created_at")
+            base.filter(steps__isnull=False)
+            .distinct()
+            .order_by("-created_at")
             .first()
         )
 

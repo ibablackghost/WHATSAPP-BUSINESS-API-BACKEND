@@ -32,7 +32,7 @@ if _csrf_env:
     _csrf_origins.extend(origin.strip() for origin in _csrf_env.split(",") if origin.strip())
 if _csrf_origins:
     CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(_csrf_origins))
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)  # noqa: F405
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True

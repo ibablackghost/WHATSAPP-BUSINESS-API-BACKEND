@@ -39,6 +39,9 @@ class FlowEngine:
             flow = self._repo.get_default_flow(organization.id)
             if not flow:
                 return {"action": "no_flow"}
+            if not flow.steps.exists():
+                logger.warning("Flow %s has no steps — skipping bot", flow.id)
+                return {"action": "no_flow", "message": "Flux sans étapes configurées."}
             session = self._create_session(organization, contact, conversation, flow)
 
         return self._process_step(session, user_input)
@@ -181,7 +184,10 @@ class FlowEngine:
         flow: BotFlow,
     ) -> SessionState:
         entry = flow.steps.filter(is_entry=True).first()
-        entry_key = entry.key if entry else flow.steps.first().key
+        first_step = flow.steps.first()
+        if not first_step:
+            raise ValueError(f"Flow {flow.id} has no steps")
+        entry_key = entry.key if entry else first_step.key
         expires = timezone.now() + timedelta(minutes=flow.session_timeout_minutes)
         return SessionState.all_objects.create(
             organization=organization,
