@@ -4,6 +4,8 @@ from pathlib import Path
 
 from decouple import Csv, config
 
+from .database import build_databases
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = config("SECRET_KEY", default="dev-insecure-key-change-in-production")
@@ -84,17 +86,8 @@ TEMPLATES = [
     },
 ]
 
-# Database
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("POSTGRES_DB", default="whatbot_pro"),
-        "USER": config("POSTGRES_USER", default="whatbot"),
-        "PASSWORD": config("POSTGRES_PASSWORD", default="whatbot"),
-        "HOST": config("POSTGRES_HOST", default="localhost"),
-        "PORT": config("POSTGRES_PORT", default="5432"),
-    }
-}
+# Database — DATABASE_URL (Railway) > POSTGRES_* > PGHOST/PGUSER/...
+DATABASES = build_databases()
 
 AUTH_USER_MODEL = "accounts.User"
 

@@ -6,7 +6,9 @@ import sys
 
 def main() -> None:
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "whatbot_pro.settings.local")
+    from whatbot_pro.settings.bootstrap import apply_default_settings
+
+    apply_default_settings()
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

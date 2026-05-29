@@ -1,25 +1,30 @@
 """
-Configuration locale sans Docker.
+Configuration locale.
 
-- SQLite (fichier db.sqlite3)
-- Pas de Redis requis (WebSockets en mémoire, Celery synchrone)
-- Idéal pour développement rapide sur Windows/Mac/Linux
+Par defaut : PostgreSQL (meme variables que postgres_local / Docker).
+SQLite uniquement si USE_SQLITE=true dans .env (legacy).
 """
+from decouple import config
+
 from .base import *  # noqa: F403
+from .database import build_databases
 
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
-# --- Base de données SQLite (aucune installation PostgreSQL) ---
-USE_SQLITE = True
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",  # noqa: F405
-    }
-}
+USE_SQLITE = config("USE_SQLITE", default=False, cast=bool)
 
-# --- Pas de Redis : tout en local / mémoire ---
+if USE_SQLITE:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",  # noqa: F405
+        }
+    }
+else:
+    DATABASES = build_databases()
+
+# --- Pas de Redis : tout en local / memoire ---
 USE_REDIS = False
 
 CHANNEL_LAYERS = {
@@ -39,10 +44,8 @@ CACHES = {
     }
 }
 
-# Celery Beat : stockage des tâches planifiées dans SQLite
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-# Dev local : ignorer signature Meta si APP_SECRET pas encore configuré
 WHATSAPP_WEBHOOK_SKIP_SIGNATURE = config(  # noqa: F405
     "WHATSAPP_WEBHOOK_SKIP_SIGNATURE", default=True, cast=bool
 )
@@ -56,7 +59,6 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
     "webhook": "10000/hour",
 }
 
-# --- CORS (Next.js : localhost ET 127.0.0.1, ports 3000-3001) ---
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",

@@ -3,6 +3,8 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "whatbot_pro.settings.prod")
+from whatbot_pro.settings.bootstrap import apply_default_settings
+
+apply_default_settings()
 
 application = get_wsgi_application()

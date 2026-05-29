@@ -1,7 +1,10 @@
+from django.conf import settings
 from django.db import connection
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from whatbot_pro.settings.database import database_host_hint
 
 
 class HealthCheckView(APIView):
@@ -15,7 +18,10 @@ class HealthCheckView(APIView):
         except Exception:
             db_ok = False
         status_code = 200 if db_ok else 503
-        return Response(
-            {"status": "healthy" if db_ok else "unhealthy", "database": db_ok},
-            status=status_code,
-        )
+        payload = {
+            "status": "healthy" if db_ok else "unhealthy",
+            "database": db_ok,
+            "database_target": database_host_hint(),
+            "settings_module": settings.SETTINGS_MODULE,
+        }
+        return Response(payload, status=status_code)
