@@ -24,8 +24,6 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 FROM base AS production
 ENV DJANGO_SETTINGS_MODULE=whatbot_pro.settings.prod
-RUN python manage.py collectstatic --noinput
-USER nobody
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
