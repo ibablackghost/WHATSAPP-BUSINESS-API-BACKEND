@@ -42,6 +42,11 @@ CACHES = {
 # Celery Beat : stockage des tâches planifiées dans SQLite
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
+# Dev local : ignorer signature Meta si APP_SECRET pas encore configuré
+WHATSAPP_WEBHOOK_SKIP_SIGNATURE = config(  # noqa: F405
+    "WHATSAPP_WEBHOOK_SKIP_SIGNATURE", default=True, cast=bool
+)
+
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405

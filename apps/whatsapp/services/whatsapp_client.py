@@ -6,9 +6,21 @@ from typing import Any
 
 import httpx
 from django.conf import settings
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
+
+from apps.whatsapp.services.whatsapp_errors import (
+    is_retryable_status,
+    log_graph_error,
+    normalize_wa_recipient,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _retryable_whatsapp_error(exception: BaseException) -> bool:
+    if isinstance(exception, httpx.HTTPStatusError):
+        return is_retryable_status(exception.response.status_code)
+    return isinstance(exception, (httpx.TimeoutException, httpx.ConnectError))
 
 
 class WhatsAppClient:
@@ -28,17 +40,22 @@ class WhatsAppClient:
         return f"{self.base_url}/{self.phone_number_id}/messages"
 
     @retry(
-        stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1, min=2, max=60),
+        retry=retry_if_exception(_retryable_whatsapp_error),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=15),
         reraise=True,
     )
     def send_message(self, payload: dict[str, Any]) -> dict[str, Any]:
-        with httpx.Client(timeout=30.0) as client:
+        if "to" in payload:
+            payload = {**payload, "to": normalize_wa_recipient(str(payload["to"]))}
+        with httpx.Client(timeout=15.0) as client:
             response = client.post(
                 self.messages_url,
                 json=payload,
                 headers=self._headers,
             )
+            if response.is_error:
+                log_graph_error(response, context=f"POST {self.phone_number_id}/messages")
             response.raise_for_status()
             return response.json()
 
@@ -47,7 +64,7 @@ class WhatsAppClient:
             {
                 "messaging_product": "whatsapp",
                 "recipient_type": "individual",
-                "to": to,
+                "to": normalize_wa_recipient(to),
                 "type": "text",
                 "text": {"preview_url": preview_url, "body": body},
             }

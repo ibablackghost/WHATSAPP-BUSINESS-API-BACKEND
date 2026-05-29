@@ -17,7 +17,6 @@ staticfiles/
 media/
 db.sqlite3
 db.sqlite3-journal
-tools/ngrok/ngrok.exe
 *.log
 .DS_Store
 .idea/

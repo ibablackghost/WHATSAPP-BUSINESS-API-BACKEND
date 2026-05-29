@@ -18,8 +18,8 @@ from apps.notifications.routing import websocket_urlpatterns as notification_ws 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": JwtAuthMiddleware(
-            AuthMiddlewareStack(
+        "websocket": AuthMiddlewareStack(
+            JwtAuthMiddleware(
                 URLRouter(core_ws + conversation_ws + agent_ws + notification_ws)
             )
         ),

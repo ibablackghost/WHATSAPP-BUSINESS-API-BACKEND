@@ -4,6 +4,7 @@ from apps.organizations.api.views import (
     CurrentOrganizationView,
     OrganizationListCreateView,
     OrganizationWhatsAppConfigView,
+    OrganizationWhatsAppStatusView,
 )
 
 urlpatterns = [
@@ -13,5 +14,10 @@ urlpatterns = [
         "whatsapp-config/",
         OrganizationWhatsAppConfigView.as_view(),
         name="organization-whatsapp-config",
+    ),
+    path(
+        "whatsapp-config/status/",
+        OrganizationWhatsAppStatusView.as_view(),
+        name="organization-whatsapp-status",
     ),
 ]

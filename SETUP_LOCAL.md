@@ -112,15 +112,10 @@ ws.onmessage = (e) => console.log(JSON.parse(e.data));
 ws.send(JSON.stringify({ type: "ping" }));
 ```
 
-## Webhook WhatsApp (tests locaux)
+## Webhook WhatsApp
 
-Utiliser [ngrok](https://ngrok.com/) :
-
-```powershell
-ngrok http 8000
-```
-
-Configurer Meta avec : `https://xxxx.ngrok.io/api/v1/whatsapp/webhook/`
+Meta nécessite une URL **HTTPS publique** (ex. **Railway**). Voir `RAILWAY-DEPLOY.md`.  
+Pour PostgreSQL en local : `SETUP-POSTGRES.md`.
 
 ## Tests
 

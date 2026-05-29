@@ -7,6 +7,7 @@ from apps.core.api.permissions import IsAdmin, IsOrganizationMember
 from apps.organizations.api.serializers import OrganizationSerializer
 from apps.organizations.api.serializers_whatsapp import WhatsAppConfigSerializer
 from apps.organizations.services.organization_service import OrganizationService
+from apps.whatsapp.services.credential_validator import WhatsAppCredentialValidator
 
 
 class CurrentOrganizationView(APIView):
@@ -39,14 +40,61 @@ class OrganizationWhatsAppConfigView(APIView):
     def post(self, request):
         serializer = WhatsAppConfigSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        validation = WhatsAppCredentialValidator().validate(
+            data["access_token"],
+            data["phone_number_id"],
+        )
+        if not validation.get("valid"):
+            return Response(
+                {
+                    "detail": validation.get("error", "Credentials Meta invalides"),
+                    "code": validation.get("code"),
+                    "hint": validation.get("hint"),
+                    "details": validation.get("details"),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         service = OrganizationService()
         service.set_whatsapp_credentials(
             request.organization,
-            phone_number_id=serializer.validated_data["phone_number_id"],
-            business_account_id=serializer.validated_data["business_account_id"],
-            access_token=serializer.validated_data["access_token"],
+            phone_number_id=data["phone_number_id"],
+            business_account_id=data["business_account_id"],
+            access_token=data["access_token"],
         )
-        return Response({"status": "configured"}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "status": "configured",
+                "phone_number_id": data["phone_number_id"],
+                "verified_name": validation.get("verified_name"),
+                "display_phone_number": validation.get("display_phone_number"),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class OrganizationWhatsAppStatusView(APIView):
+    """Vérifie les credentials WhatsApp stockés pour l'organisation."""
+
+    permission_classes = [IsOrganizationMember, IsAdmin]
+
+    def get(self, request):
+        org = request.organization
+        service = OrganizationService()
+        token = service.get_access_token(org)
+        validation = WhatsAppCredentialValidator().validate(
+            token, org.whatsapp_phone_number_id
+        )
+        return Response(
+            {
+                "organization_id": str(org.id),
+                "phone_number_id": org.whatsapp_phone_number_id or None,
+                "has_access_token": bool(token),
+                **validation,
+            }
+        )
 
 
 class OrganizationListCreateView(generics.ListCreateAPIView):

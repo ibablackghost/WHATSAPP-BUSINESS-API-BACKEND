@@ -1,4 +1,4 @@
-# Lance WhatBot Pro en mode local (sans Docker)
+# Lance WhatBot Pro (PostgreSQL + Redis via Docker)
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot\..
 
@@ -8,7 +8,7 @@ if (-not (Test-Path ".venv\Scripts\python.exe")) {
     .\.venv\Scripts\pip install -r requirements.txt
 }
 
-$env:DJANGO_SETTINGS_MODULE = "whatbot_pro.settings.local"
+$env:DJANGO_SETTINGS_MODULE = "whatbot_pro.settings.postgres_local"
 if (Test-Path ".env") {
     Get-Content .env | ForEach-Object {
         if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
@@ -17,16 +17,15 @@ if (Test-Path ".env") {
     }
 }
 
-Write-Host "Migrations..."
-.\.venv\Scripts\python manage.py migrate --noinput
-
-if (-not (Test-Path "db.sqlite3")) {
-    Write-Host "Seed des donnees demo..."
-    .\.venv\Scripts\python manage.py seed_data
+# Verifier que Postgres Docker tourne
+$pgRunning = docker ps --filter "name=whatbot_postgres" --filter "status=running" -q 2>$null
+if (-not $pgRunning) {
+    Write-Host "PostgreSQL non demarre. Lancez d'abord: .\scripts\postgres.ps1" -ForegroundColor Yellow
 }
 
 Write-Host ""
 Write-Host "API: http://127.0.0.1:8000/api/docs/"
-Write-Host "Admin: admin@whatbot.pro / Admin@WhatBot2024!"
+Write-Host "Compte: admin@whatbot.pro / Admin@WhatBot2024!"
+Write-Host "Webhook Meta: URL HTTPS Railway (voir RAILWAY-DEPLOY.md) — ngrok non utilise"
 Write-Host ""
 .\.venv\Scripts\python manage.py runserver

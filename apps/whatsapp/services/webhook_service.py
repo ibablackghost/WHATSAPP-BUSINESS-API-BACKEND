@@ -47,12 +47,18 @@ class WebhookService:
     def _resolve_organization(self, phone_number_id: str):
         from apps.organizations.models import Organization
 
-        try:
-            return Organization.objects.get(
-                whatsapp_phone_number_id=phone_number_id, is_active=True
-            )
-        except Organization.DoesNotExist:
+        qs = Organization.objects.filter(
+            whatsapp_phone_number_id=phone_number_id,
+            is_active=True,
+        )
+        if not qs.exists():
             return None
+        if qs.count() > 1:
+            logger.warning(
+                "Plusieurs orgs pour phone_number_id=%s — utilisation de la plus récente",
+                phone_number_id,
+            )
+        return qs.order_by("-updated_at").first()
 
     def _process_messages(
         self, org, messages: list, contacts_meta: list
