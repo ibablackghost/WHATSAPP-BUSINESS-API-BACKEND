@@ -23,8 +23,10 @@ ENV DJANGO_SETTINGS_MODULE=whatbot_pro.settings.dev
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 FROM base AS production
-ENV DJANGO_SETTINGS_MODULE=whatbot_pro.settings.prod
+ENV DJANGO_SETTINGS_MODULE=whatbot_pro.settings.prod \
+    WEB_CONCURRENCY=2
+# Railway injecte PORT (souvent != 8000) — ne pas binder en dur sur 8000
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health/ || exit 1
-CMD ["gunicorn", "whatbot_pro.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "-w", "4"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD sh -c 'curl -f "http://127.0.0.1:${PORT:-8000}/health/" || exit 1'
+CMD ["sh", "-c", "exec gunicorn whatbot_pro.asgi:application -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8000} -w ${WEB_CONCURRENCY}"]
