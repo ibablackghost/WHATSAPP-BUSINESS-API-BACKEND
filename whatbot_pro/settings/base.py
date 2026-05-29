@@ -88,11 +88,11 @@ TEMPLATES = [
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("POSTGRES_DB", default="whatbot_pro"),
-        "USER": config("POSTGRES_USER", default="whatbot"),
-        "PASSWORD": config("POSTGRES_PASSWORD", default="whatbot"),
-        "HOST": config("POSTGRES_HOST", default="localhost"),
-        "PORT": config("POSTGRES_PORT", default="5432"),
+        "NAME": config("PGDATABASE", default="whatbot_pro"),
+        "USER": config("PGUSER", default="whatbot"),
+        "PASSWORD": config("PGPASSWORD", default="whatbot"),
+        "HOST": config("PGHOST", default="localhost"),
+        "PORT": config("PGPORT", default="5432"),
     }
 }
 
